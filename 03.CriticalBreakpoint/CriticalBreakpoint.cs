@@ -7,14 +7,11 @@
 
     public static class CriticalBreakpoint
     {
-        private static List<Tuple<BigInteger, BigInteger, BigInteger, BigInteger>> lines;
+        private static List<Line> lines;
 
         public static void Main()
         {
-            lines = new List<Tuple<BigInteger, BigInteger, BigInteger, BigInteger>>();
-            var criticalBreakpoint = false;
-            BigInteger? criticalRatio = null;
-
+            lines = new List<Line>();
             while (true)
             {
                 var input = Console.ReadLine();
@@ -24,37 +21,36 @@
                 }
 
                 var lineCoordinates = input
-                    .Split(' ')
+                    .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(BigInteger.Parse)
                     .ToArray();
 
-                var x1 = lineCoordinates[0];
-                var y1 = lineCoordinates[1];
-                var x2 = lineCoordinates[2];
-                var y2 = lineCoordinates[3];
+                lines.Add(
+                    new Line(
+                        lineCoordinates[0],
+                        lineCoordinates[1],
+                        lineCoordinates[2],
+                        lineCoordinates[3]));
+            }
 
-                var currentCriticalRatio = (x2 + y2) - (x1 + y1);
-                if (currentCriticalRatio < 0)
-                {
-                    currentCriticalRatio *= -1;
-                }
+            var criticalBreakpoint = false;
+            BigInteger? criticicalRatio = null;
 
-                lines.Add(new Tuple<BigInteger, BigInteger, BigInteger, BigInteger>(
-                    x1, y1, x2, y2));
-
-                if (criticalRatio != null &&
-                    currentCriticalRatio != criticalRatio.Value &&
-                    currentCriticalRatio != 0)
+            foreach (var line in lines)
+            {
+                if (criticicalRatio != null &&
+                    line.CriticalRatio != criticicalRatio.Value &&
+                    line.CriticalRatio != 0)
                 {
                     criticalBreakpoint = false;
                     break;
                 }
 
-                if (criticalRatio == null &&
-                    currentCriticalRatio != 0)
+                if (criticicalRatio == null &&
+                    line.CriticalRatio != 0)
                 {
                     criticalBreakpoint = true;
-                    criticalRatio = currentCriticalRatio;
+                    criticicalRatio = line.CriticalRatio;
                 }
             }
 
@@ -62,11 +58,11 @@
             {
                 foreach (var line in lines)
                 {
-                    Console.WriteLine($"Line: [{line.Item1}, {line.Item2}, {line.Item3}, {line.Item4}]");
+                    Console.WriteLine(line);
                 }
 
-                var critical =
-                    Power(criticalRatio.Value, lines.Count) % BigInteger.Parse(lines.Count.ToString());
+                var critical = BigInteger.Pow(criticicalRatio.Value, lines.Count) % lines.Count;
+
                 Console.WriteLine($"Critical Breakpoint: {critical}");
             }
             else
@@ -75,15 +71,33 @@
             }
         }
 
-        private static BigInteger Power(BigInteger num, BigInteger pow)
+        private class Line
         {
-            var res = num;
-            for (int i = 1; i < pow; i++)
+            private readonly BigInteger x1;
+            private readonly BigInteger y1;
+            private readonly BigInteger x2;
+            private readonly BigInteger y2;
+
+            public Line(BigInteger x1, BigInteger y1, BigInteger x2, BigInteger y2)
             {
-                res *= num;
+                this.x1 = x1;
+                this.y1 = y1;
+                this.x2 = x2;
+                this.y2 = y2;
             }
 
-            return res;
+            public BigInteger CriticalRatio
+            {
+                get
+                {
+                    return BigInteger.Abs((this.x2 + this.y2) - (this.x1 + this.y1));
+                }
+            }
+
+            public override string ToString()
+            {
+                return $"Line: [{this.x1}, {this.y1}, {this.x2}, {this.y2}]";
+            }
         }
     }
 }
